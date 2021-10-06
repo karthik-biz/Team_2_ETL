@@ -1,87 +1,61 @@
+
 #!/bin/bash
+#crone tab * * * * * /home/folder/gfg-code.sh
 set -x
 db_name="ACTIANS_DWSTAGE"
 db_user="karthik"
 db_password="101332649"
-source_folder="/mnt/c/csv"
+source_folder="/home/ec2-user/csv/source"
 cd $source_folder
-if [ ! -d /mnt/c/csv/processing ]; then
-  mkdir -p /mnt/c/csv/processing;
-  chmod 777 /mnt/c/csv/processing;
+if [ ! -d /home/ec2-user/csv/processing ]; then
+  mkdir -p /home/ec2-user/csv/processing;
+  chmod 777 /home/ec2-user/csv/processing;
 fi
 
-if [ ! -d /mnt/c/csv/processed ]; then
-  mkdir -p /mnt/c/csv/processed;
-  chmod 777 /mnt/c/csv/processed;
+if [ ! -d /home/ec2-user/csv/processed ]; then
+  mkdir -p /home/ec2-user/csv/processed;
+  chmod 777 /home/ec2-user/csv/processed;
 fi
 
-if [ ! -d /mnt/c/csv/processed/batch.log]; then
-  mkdir -p /mnt/c/csv/processed/batch.log;
-  chmod 777 /mnt/c/csv/processing/batch.log;
+if [ ! -d /home/ec2-user/csv/processed/batch.log]; then
+  mkdir -p /home/ec2-user/csv/processed/batch.log;
+  chmod 777 /home/ec2-user/csv/processing/batch.log;
 fi
-
+csv_files=`ls -1 *.csv`
 #Presently working in same directory so remember to  declare variable and update in loop later
-for folder in  */; do
-if [ -d "$folder" ]; then
-        # Will not run if no directories are available
-        echo "$folder is empty"
-	continue
-    fi
-echo "Process has started for $folder at" %DATE% %TIME% >> /mnt/c/csv/processing/batch.log
-if [ ! -d /mnt/c/csv/processing/"$folder" ]; then
-  mkdir -p /mnt/c/csv/processing/"$folder";
+for csv_file in ${_csv_files[@]}
+do
+if
+ls -1qA /home/ec2-user/csv/source | grep -q .
+then
+! echo Files are present. Process beginning....
+else
+echo No files present. Rescheduling
+break
 fi
+echo "Process has started for $csv_file at" %DATE% %TIME% >> /home/ec2-user/csv/processing/batch.log
+table_name=`echo "$csv_file" | awk -F'[_.]' '{print $1}'`
+store_num=`echo "$csv_file" | awk -F'[_.]' '{print $3}'`
 mysql -u karthik -p101332649 << EOF
 SET GLOBAL LOCAL_INFILE=1;
 LOAD DATA LOCAL INFILE
-'offices.csv'
-INTO TABLE ACTIANS_DWSTAGE.offices
+'$csv_file'
+INTO TABLE ACTIANS_DWSTAGE.'$table_name'
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\r\n'
 IGNORE 1 ROWS;
 
-LOAD DATA LOCAL INFILE
-'employees.csv'
-INTO TABLE ACTIANS_DWSTAGE.employees
-FIELDS TERMINATED BY ','
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS;
-
-LOAD DATA LOCAL INFILE
-'orderdetails.csv'
-INTO TABLE ACTIANS_DWSTAGE.orderdetails
-FIELDS TERMINATED BY ','
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS;
-
-LOAD DATA LOCAL INFILE
-'orders.csv'
-INTO TABLE ACTIANS_DWSTAGE.orders
-FIELDS TERMINATED BY ','
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS;
-LOAD DATA LOCAL INFILE
-'payments.csv'
-INTO TABLE ACTIANS_DWSTAGE.payments
-FIELDS TERMINATED BY ','
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS;
-
-LOAD DATA LOCAL INFILE
-'productlines.csv'
-INTO TABLE ACTIANS_DWSTAGE.productlines
-FIELDS TERMINATED BY ','
-ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS;
 EOF
-mv /mnt/c/csv/processing/"$folder" /mnt/c/csv/processed
-echo "Process has ended for $folder at" %DATE% %TIME% >> /mnt/c/csv/processing/batch.log
+mv /home/e2-user/csv/processing/'$csv_file' /home/ec2-user/csv/processed
+echo "Process has ended for $csv_file at" %DATE% %TIME% >> /home/ec2-user/csv/processing/batch.log
+current_time=$(date "+%Y.%m.%d-%H.%M.%S")
+echo "Current Time : $current_time">>/home/ec2-user/csv/processing/batch.log
+ 
+new_fileName=$csv_file.$current_time
+echo "New FileName: " "$new_fileName"
+ 
+$(mv /home/ec2-user/csv/processing/$csv_file /home/ec2-user/csv/processed/$new_filename)
 
 done
 exit
